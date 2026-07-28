@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A Garden for You 🌸 | Happy Birthday</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #030208;
+      font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+      color: #fff;
+      user-select: none;
+    }
+
+    /* Fullscreen Canvas */
+    #flowerCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      cursor: pointer;
+    }
+
+    /* Hint & Countdown Overlay */
+    .top-bar {
+      position: absolute;
+      top: 20px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .hint {
+      font-size: 0.9rem;
+      letter-spacing: 2px;
+      color: rgba(255, 255, 255, 0.7);
+      text-transform: uppercase;
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    .countdown {
+      font-size: 0.85rem;
+      color: #ff9a9e;
+      letter-spacing: 1px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 4px 14px;
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 182, 193, 0.2);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.9; }
+    }
+
+    /* Glassmorphism Card Overlay */
+    .ui-layer {
+      position: relative;
+      z-index: 3;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      padding-bottom: 40px;
+      pointer-events: none;
+    }
+
+    .card {
+      pointer-events: auto;
+      background: rgba(15, 8, 20, 0.45);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 182, 193, 0.25);
+      border-radius: 24px;
+      padding: 28px 40px;
+      text-align: center;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(255, 105, 180, 0.15);
+      max-width: 480px;
+      width: 90%;
+      transform: translateY(0);
+      transition: all 0.4s ease;
+    }
+
+    .card h1 {
+      font-size: 1.8rem;
+      font-weight: 300;
+      background: linear-gradient(135deg, #ff9a9e, #fecfef, #a1c4fd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+
+    .card p {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.75);
+      margin-bottom: 20px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      box-shadow: 0 10px 25px rgba(255, 117, 140, 0.4);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: none;
+    }
+
+    .btn:hover {
+      transform: scale(1.04);
+      box-shadow: 0 15px 35px rgba(255, 117, 140, 0.6);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
+    }
+
+    /* Modal / Letter Popup */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(12px);
+      z-index: 10;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+
+    .modal.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-box {
+      background: rgba(20, 10, 25, 0.95);
+      border: 1px solid rgba(255, 182, 193, 0.3);
+      padding: 35px;
+      border-radius: 20px;
+      max-width: 500px;
+      width: 85%;
+      color: #f1e4f3;
+      line-height: 1.8;
+      box-shadow: 0 0 50px rgba(255, 117, 140, 0.25);
+    }
+
+    .close-modal {
+      float: right;
+      background: none;
+      border: none;
+      color: #ff7eb3;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    /* Music Button */
+    .music-btn {
+      position: absolute;
+      top: 25px;
+      right: 25px;
+      z-index: 5;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div class="hint">✨ Tap anywhere on the screen to bloom a flower ✨</div>
+    <div class="countdown" id="countdown">🎉 Happy Birthday Shikhu Baby! 🎉</div>
+  </div>
+  
+  <button class="music-btn" id="musicBtn">⏸ Pause Music</button>
+  <canvas id="flowerCanvas"></canvas>
+
+  <audio id="bgMusic" loop autoplay muted preload="auto">
+    <source src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=soft-piano-10813.mp3" type="audio/mpeg">
+  </audio>
+
+  <div class="ui-layer">
+    <div class="card">
+      <h1>Happy Birthday, My Love ✨</h1>
+      <p>A small gift to my baby girl press anywhere to grow flowers cause my baby is the flower of my life.</p>
+      <div class="btn-group">
+        <button class="btn" id="openLetter">Read My Letter 💌</button>
+        <button class="btn btn-secondary" id="clearCanvas">🧹 Clear Garden</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="modal-box">
+      <button class="close-modal" id="closeLetter">✕</button>
+      <h2 style="margin-bottom: 15px; color: #ff7eb3; font-weight: 300;">Dearest Kuku Mimi,</h2>
+      <p>
+        On your special day, I wanted to give you something as radiant, unique, and beautiful as you are. 
+      </p>
+      <br>
+      <p>
+        Like every single flower blooming on this screen, you bring endless color, light, and magic into my life. Thank you for being my favorite person, my best friend, and my constant smile.
+      </p>
+      <br>
+      <p>
+        May this year bring you all the good, magic, and happiness you so deeply deserve.
+      </p>
+      <br>
+      <p>I love you so much my sweet baby girl😘😘💗💖💝</p>
+      <br>
+      <p style="text-align: right; font-style: italic; color: #ff9a9e;">
+        — Forever & Always,<br>
+        Mumu Mimi💙💜
+      </p>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('flowerCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let w, h;
+    function resize() {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Color Palettes for High-End Aesthetic
+    const palettes = [
+      { petal: ['#ff758c', '#ff7eb3', '#fecfef'], center: '#fff07c', stem: '#2d5a27' },
+      { petal: ['#a1c4fd', '#c2e9fb', '#e0c3fc'], center: '#ffea85', stem: '#1b4332' },
+      { petal: ['#f857a6', '#ff5858', '#fecfef'], center: '#ffffff', stem: '#2d5a27' },
+      { petal: ['#e0c3fc', '#8ec5fc', '#e0c3fc'], center: '#fff3b0', stem: '#1b4332' }
+    ];
+
+    // Glow Effect Helper
+    function setGlow(color, blur) {
+      ctx.shadowColor = color;
+      ctx.shadowBlur = blur;
+    }
+
+    // Stem Class with Curved Organic Physics
+    class Stem {
+      constructor(startX, targetY, palette) {
+        this.x = startX;
+        this.startY = h;
+        this.targetY = targetY;
+        this.currentY = h;
+        this.palette = palette;
+        this.curve = (Math.random() - 0.5) * 80;
+        this.progress = 0;
+        this.speed = 0.015 + Math.random() * 0.01;
+        this.flower = null;
+      }
+
+      update() {
+        if (this.progress < 1) {
+          this.progress += this.speed;
+          this.currentY = h - (h - this.targetY) * this.progress;
+        } else if (!this.flower) {
+          this.flower = new Flower(this.x + Math.sin(this.progress * Math.PI) * this.curve, this.targetY, this.palette);
+        }
+
+        if (this.flower) {
+          this.flower.update();
+        }
+      }
+
+      draw() {
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.startY);
+        
+        const controlX = this.x + this.curve;
+        const controlY = (this.startY + this.currentY) / 2;
+        const endX = this.x + (this.curve * (this.currentY - h)) / (this.targetY - h || 1);
+
+        ctx.quadraticCurveTo(controlX, controlY, endX, this.currentY);
+        ctx.strokeStyle = this.palette.stem;
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        setGlow(this.palette.stem, 8);
+        ctx.stroke();
+        ctx.restore();
+
+        if (this.flower) {
+          this.flower.draw();
+        }
+      }
+    }
+
+    // Layered Blooming Flower Class
+    class Flower {
+      constructor(x, y, palette) {
+        this.x = x;
+        this.y = y;
+        this.palette = palette;
+        this.size = 0;
+        this.maxSize = 35 + Math.random() * 25;
+        this.petalCount = Math.floor(Math.random() * 4) + 6;
+        this.layers = 3;
+        this.rotation = Math.random() * Math.PI * 2;
+      }
+
+      update() {
+        if (this.size < this.maxSize) {
+          this.size += (this.maxSize - this.size) * 0.05;
+        }
+      }
+
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+
+        for (let l = this.layers; l > 0; l--) {
+          const layerSize = this.size * (l / this.layers);
+          const color = this.palette.petal[l - 1] || this.palette.petal[0];
+
+          for (let i = 0; i < this.petalCount; i++) {
+            const angle = (i * Math.PI * 2) / this.petalCount + (l * 0.2);
+            ctx.save();
+            ctx.rotate(angle);
+
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.quadraticCurveTo(layerSize * 0.5, -layerSize * 0.8, 0, -layerSize * 1.3);
+            ctx.quadraticCurveTo(-layerSize * 0.5, -layerSize * 0.8, 0, 0);
+
+            ctx.fillStyle = color;
+            setGlow(color, 15);
+            ctx.globalAlpha = 0.85;
+            ctx.fill();
+            ctx.restore();
+          }
+        }
+
+        ctx.beginPath();
+        ctx.arc(0, 0, this.size * 0.25, 0, Math.PI * 2);
+        ctx.fillStyle = this.palette.center;
+        setGlow(this.palette.center, 20);
+        ctx.fill();
+
+        ctx.restore();
+      }
+    }
+
+    // Floating Glowing Pollen / Fireflies
+    class Particle {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x = Math.random() * w;
+        this.y = Math.random() * h;
+        this.size = Math.random() * 2.5 + 1;
+        this.vy = -(Math.random() * 0.4 + 0.2);
+        this.vx = Math.random() * 0.4 - 0.2;
+        this.alpha = Math.random() * 0.6 + 0.2;
+      }
+
+      update() {
+        this.y += this.vy;
+        this.x += this.vx;
+        if (this.y < 0) this.reset();
+      }
+
+      draw() {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 220, 240, ${this.alpha})`;
+        setGlow('#ffb6c1', 10);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // Floating Ambient Hearts Feature
+    class HeartParticle {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x = Math.random() * w;
+        this.y = h + 20;
+        this.size = Math.random() * 8 + 6;
+        this.vy = -(Math.random() * 0.5 + 0.3);
+        this.vx = Math.sin(Math.random() * Math.PI) * 0.3;
+        this.alpha = Math.random() * 0.5 + 0.2;
+      }
+
+      update() {
+        this.y += this.vy;
+        this.x += this.vx;
+        if (this.y < -30) this.reset();
+      }
+
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.beginPath();
+        const topCurveHeight = this.size * 0.3;
+        ctx.moveTo(0, topCurveHeight);
+        ctx.bezierCurveTo(0, 0, -this.size / 2, 0, -this.size / 2, topCurveHeight);
+        ctx.bezierCurveTo(-this.size / 2, (this.size + topCurveHeight) / 2, 0, this.size, 0, this.size);
+        ctx.bezierCurveTo(0, this.size, this.size / 2, (this.size + topCurveHeight) / 2, this.size / 2, topCurveHeight);
+        ctx.bezierCurveTo(this.size / 2, 0, 0, 0, 0, topCurveHeight);
+        ctx.fillStyle = `rgba(255, 182, 193, ${this.alpha})`;
+        setGlow('#ff758c', 8);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // Glitter/Sparkle Dust Trailed by Butterflies
+    class Sparkle {
+      constructor(x, y) {
+        this.x = x + (Math.random() - 0.5) * 10;
+        this.y = y + (Math.random() - 0.5) * 10;
+        this.size = Math.random() * 2.5 + 0.5;
+        this.alpha = 1;
+        this.decay = Math.random() * 0.03 + 0.015;
+        this.vy = Math.random() * 0.5 + 0.2;
+        this.hue = Math.random() * 40 + 260;
+      }
+
+      update() {
+        this.y += this.vy;
+        this.alpha -= this.decay;
+      }
+
+      draw() {
+        if (this.alpha <= 0) return;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${this.hue}, 90%, 80%, ${this.alpha})`;
+        setGlow(`hsl(${this.hue}, 90%, 80%)`, 8);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // Elegant Glowing Purple Butterfly Class
+    class Butterfly {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x = Math.random() * w;
+        this.y = Math.random() * h + h;
+        this.size = Math.random() * 12 + 16;
+        this.angle = (Math.random() - 0.5) * Math.PI * 0.5;
+        this.speed = Math.random() * 0.8 + 0.6;
+        this.wingAngle = 0;
+        this.wingSpeed = Math.random() * 0.08 + 0.06;
+        this.targetX = Math.random() * w;
+        this.targetY = Math.random() * h;
+        this.changeDirTimer = 0;
+        this.colors = {
+          inner: '#e0b0ff',
+          outer: '#9b51e0',
+          glow: '#d8b4fe'
+        };
+      }
+
+      update(sparklesArray) {
+        this.changeDirTimer++;
+        if (this.changeDirTimer > 120 + Math.random() * 100) {
+          this.targetX = Math.random() * w;
+          this.targetY = Math.random() * h;
+          this.changeDirTimer = 0;
+        }
+
+        const dx = this.targetX - this.x;
+        const dy = this.targetY - this.y;
+        const targetAngle = Math.atan2(dy, dx) + Math.PI / 2;
+
+        this.angle += (targetAngle - this.angle) * 0.02;
+
+        this.x += Math.cos(this.angle - Math.PI / 2) * this.speed;
+        this.y += Math.sin(this.angle - Math.PI / 2) * this.speed;
+
+        this.wingAngle += this.wingSpeed;
+
+        if (Math.random() < 0.4) {
+          sparklesArray.push(new Sparkle(this.x, this.y));
+        }
+
+        if (this.x < -50 || this.x > w + 50 || this.y < -50 || this.y > h + 50) {
+          this.reset();
+        }
+      }
+
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+
+        const wingScaleX = Math.sin(this.wingAngle);
+
+        setGlow(this.colors.glow, 20);
+
+        [-1, 1].forEach(side => {
+          ctx.save();
+          ctx.scale(side * wingScaleX, 1);
+
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.bezierCurveTo(-this.size * 1.5, -this.size * 1.8, -this.size * 2, -this.size * 0.2, 0, 0);
+          ctx.fillStyle = this.colors.outer;
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.bezierCurveTo(-this.size * 1.0, -this.size * 1.2, -this.size * 1.3, -this.size * 0.2, 0, 0);
+          ctx.fillStyle = this.colors.inner;
+          ctx.globalAlpha = 0.8;
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.bezierCurveTo(-this.size * 1.2, this.size * 1.5, -this.size * 0.4, this.size * 1.8, 0, 0);
+          ctx.fillStyle = this.colors.outer;
+          ctx.globalAlpha = 0.9;
+          ctx.fill();
+
+          ctx.restore();
+        });
+
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 1.5, this.size * 0.4, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+
+        ctx.restore();
+      }
+    }
+
+    // Active Objects Arrays
+    let stems = [];
+    const particles = Array.from({ length: 30 }, () => new Particle());
+    const hearts = Array.from({ length: 12 }, () => new HeartParticle());
+    const butterflies = Array.from({ length: 6 }, () => new Butterfly());
+    const sparkles = [];
+
+    // Initial Flowers on Load
+    setTimeout(() => {
+      stems.push(new Stem(w * 0.2, h * 0.45, palettes[0]));
+      stems.push(new Stem(w * 0.5, h * 0.38, palettes[1]));
+      stems.push(new Stem(w * 0.8, h * 0.48, palettes[2]));
+    }, 300);
+
+    // Spawn Flower on Tap / Click
+    window.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('.card') || e.target.closest('.modal') || e.target.closest('.music-btn')) return;
+
+      const randomPalette = palettes[Math.floor(Math.random() * palettes.length)];
+      stems.push(new Stem(e.clientX, e.clientY, randomPalette));
+    });
+
+    // Main Animation Loop
+    function animate() {
+      ctx.clearRect(0, 0, w, h);
+
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+
+      hearts.forEach(h => {
+        h.update();
+        h.draw();
+      });
+
+      stems.forEach(s => {
+        s.update();
+        s.draw();
+      });
+
+      for (let i = sparkles.length - 1; i >= 0; i--) {
+        sparkles[i].update();
+        sparkles[i].draw();
+        if (sparkles[i].alpha <= 0) {
+          sparkles.splice(i, 1);
+        }
+      }
+
+      butterflies.forEach(b => {
+        b.update(sparkles);
+        b.draw();
+      });
+
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    // UI Logic & Flower Burst Feature on Opening Letter
+    const modal = document.getElementById('modal');
+    document.getElementById('openLetter').onclick = () => {
+      modal.classList.add('active');
+      for (let i = 0; i < 5; i++) {
+        setTimeout(() => {
+          const rx = Math.random() * (w * 0.8) + w * 0.1;
+          const ry = Math.random() * (h * 0.4) + h * 0.3;
+          const randomPalette = palettes[Math.floor(Math.random() * palettes.length)];
+          stems.push(new Stem(rx, ry, randomPalette));
+        }, i * 200);
+      }
+    };
+    document.getElementById('closeLetter').onclick = () => modal.classList.remove('active');
+
+    // Clear Canvas Feature
+    document.getElementById('clearCanvas').onclick = () => {
+      stems = [];
+    };
+
+    // Auto Play / Unmute Music Logic
+    const musicBtn = document.getElementById('musicBtn');
+    const music = document.getElementById('bgMusic');
+    let isPlaying = true;
+
+    // Start playing audio unmuted on first interaction across browser restrictions
+    const startAudio = () => {
+      if (music.muted) {
+        music.muted = false;
+        music.play().then(() => {
+          isPlaying = true;
+          musicBtn.textContent = '⏸ Pause Music';
+        }).catch(() => {});
+      }
+      window.removeEventListener('pointerdown', startAudio);
+      window.removeEventListener('keydown', startAudio);
+    };
+
+    window.addEventListener('pointerdown', startAudio);
+    window.addEventListener('keydown', startAudio);
+
+    // Initial silent autoplay attempt
+    music.play().catch(() => {});
+
+    musicBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (isPlaying) {
+        music.pause();
+        musicBtn.textContent = '🎵 Play Music';
+        isPlaying = false;
+      } else {
+        music.muted = false;
+        music.play().then(() => {
+          musicBtn.textContent = '⏸ Pause Music';
+          isPlaying = true;
+        }).catch(() => {});
+      }
+    };
+  </script>
+</body>
+</html>
